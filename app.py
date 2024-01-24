@@ -1,5 +1,5 @@
-import sqlite3
 import re
+import sqlite3
 from datetime import datetime, timedelta
 
 
@@ -7,7 +7,8 @@ def stats():
     work_time_statistics("today")
     work_time_statistics("this_week")
     work_time_statistics("this_month")
-    
+
+
 def seconds_to_hours_minutes(seconds):
     hours, remainder = divmod(seconds, 3600)
     minutes, _ = divmod(remainder, 60)
@@ -91,6 +92,7 @@ def work_time_statistics(period):
     finally:
         connection.close()
 
+
 def work_time():
     uid_input = input("Podaj uid użytkownika: ")
     connection = sqlite3.connect("gate_system.db")
@@ -106,9 +108,9 @@ def work_time():
         entrance_counter = 0
 
         for entry, exit in results:
-            entry_time = datetime.strptime(entry, "%Y-%m-%d %H:%M:%S") #sprawdzic jak to jest zapisywane w bazce
+            entry_time = datetime.strptime(entry, "%Y-%m-%d %H:%M:%S")  # sprawdzic jak to jest zapisywane w bazce
             if exit is not None:
-                exit_time = datetime.strptime(exit, "%Y-%m-%d %H:%M:%S") # to też
+                exit_time = datetime.strptime(exit, "%Y-%m-%d %H:%M:%S")  # to też
             else:
                 exit_time = datetime.now()
 
@@ -135,6 +137,7 @@ def add_random_values():
     connection.commit()
     connection.close()
 
+
 def unregister():
     uid_input = input("Podaj uid użytkownika: ")
     connection = sqlite3.connect("gate_system.db")
@@ -150,16 +153,60 @@ def unregister():
 
 def register():
     uid = input("Podaj uid użytkownika: ")
-    if(check_is_uid_valid(uid)):
+    if check_is_uid_valid(uid):
         connection = sqlite3.connect("gate_system.db")
         cursor = connection.cursor()
         cursor.execute("INSERT INTO registered_uids (uid) VALUES (?)", (uid,))
         connection.commit()
         connection.close()
     else:
-        print("Niepoprawne uid")
+        print("Niepoprawne uid. Przyjmowany format: [N, N, N, N, N]")
 
-    show_menu()
+
+def show_registered_uid(registered_uids: list) -> None:
+    print('\nregistered_uids')
+    for i, uid in enumerate(registered_uids):
+        print(f'{i + 1}.{uid[0]}')
+    print("\n")
+
+
+def print_single_record_from_scan_times(i, scan_time) -> None:
+    if scan_time[1] and scan_time[2]:
+        print(f'{i + 1}.  {scan_time[0]}  {scan_time[1]}  {scan_time[2]}')
+    elif scan_time[1] and (not scan_time[2]):
+        print(f'{i + 1}.  {scan_time[0]}  {scan_time[1]}  {" " * 14}{scan_time[2]}')
+    elif (not scan_time[1]) and scan_time[2]:
+        print(f'{i + 1}.  {scan_time[0]}  {" " * 14}{scan_time[1]}  {scan_time[2]}')
+    else:
+        print(f'{i + 1}.  {scan_time[0]}  {" " * 14}{scan_time[1]}  {" " * 14}{scan_time[2]}')
+
+
+def show_scan_times(scan_times: list) -> None:
+    print('\nscan_times')
+    print(f'lp. {" " * 8} uid {" " * 10} enter_time {" " * 10} exit_time')
+    for i, scan_time in enumerate(scan_times):
+        print_single_record_from_scan_times(i, scan_time)
+    print("\n")
+
+
+def get_registered_uid() -> None:
+    connection = sqlite3.connect("gate_system.db")
+    cursor = connection.cursor()
+    cursor.execute("SELECT uid FROM registered_uids")
+    registered_uids = cursor.fetchall()
+    connection.commit()
+    connection.close()
+    show_registered_uid(registered_uids)
+
+
+def get_scan_times() -> None:
+    connection = sqlite3.connect("gate_system.db")
+    cursor = connection.cursor()
+    cursor.execute("SELECT uid, enter_time, exit_time FROM scan_times")
+    scan_times = cursor.fetchall()
+    connection.commit()
+    connection.close()
+    show_scan_times(scan_times)
 
 
 def show_menu():
@@ -167,26 +214,34 @@ def show_menu():
     print("2 - wyrejestruj użytkownika")
     print("3 - czas pracy użytkownika")
     print("4 - statystyki użytkownika")
-    choice = input("Podaj opcję: ")
+    print("5 - zaprezentuj uid zarejestrowane")
+    print("6 - zaprezentuj tabele dotyczącą czasu")
+    print("7 - zamknij aplikacje")
+    choice = input("Podaj opcję:\n")
     if choice == '1':
         register()
     elif choice == '2':
         unregister()
     elif choice == '3':
-        add_random_values()
         work_time()
     elif choice == '4':
         stats()
+    elif choice == '5':
+        get_registered_uid()
+    elif choice == '6':
+        get_scan_times()
+    elif choice == '7':
+        return False
     else:
         print("Zła opcja")
-        show_menu()
+    return True
 
 
 def check_is_uid_valid(uid):
     pattern = re.compile(r'\[\d{1,3}, \d{1,3}, \d{1,3}, \d{1,3}, \d{1,3}\]')
-    if pattern.match(uid):
-        return True
-    return False
+    return pattern.match(uid)
 
-if __name__ == '__main__':
-    show_menu()
+
+def main():
+    while show_menu():
+        pass
