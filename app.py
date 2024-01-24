@@ -3,6 +3,11 @@ import re
 from datetime import datetime, timedelta
 
 
+def stats():
+    work_time_statistics("today")
+    work_time_statistics("this_week")
+    work_time_statistics("this_month")
+    
 def seconds_to_hours_minutes(seconds):
     hours, remainder = divmod(seconds, 3600)
     minutes, _ = divmod(remainder, 60)
@@ -85,12 +90,6 @@ def work_time_statistics(period):
 
     finally:
         connection.close()
-
-
-# Przykłady użycia dla różnych okresów
-work_time_statistics("today")
-work_time_statistics("this_week")
-work_time_statistics("this_month")
 
 def work_time():
     uid_input = input("Podaj uid użytkownika: ")
