@@ -5,6 +5,8 @@ from datetime import datetime
 
 import paho.mqtt.client as mqtt
 
+from app import main
+
 # The broker name or IP address.
 broker = "localhost"
 
@@ -167,11 +169,7 @@ def disconnect_from_broker() -> None:
 
 def run_receiver() -> None:
     connect_to_broker()
-    try:
-        while True:
-            pass
-    except KeyboardInterrupt:
-        print("[INFO] End")
+    main()
     disconnect_from_broker()
 
 
